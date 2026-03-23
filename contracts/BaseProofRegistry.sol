@@ -3,6 +3,12 @@ pragma solidity ^0.8.20;
 
 contract BaseProofRegistry {
     address public registryOwner;
+    bool public paused;
+
+    uint256 public nextAssetId = 1;
+    uint256 public nextLicenseId = 1;
+
+    mapping(address => bool) public operators;
 
     struct Asset {
         uint256 id;
