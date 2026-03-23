@@ -1,0 +1,16 @@
+{
+  "name": "base-proof-registry",
+  "version": "1.0.0",
+  "description": "BaseProofRegistry - provenance and licensing registry on Base",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:base-sepolia": "hardhat run scripts/deploy.js --network baseSepolia"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.10"
+  }
+}
