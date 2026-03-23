@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 contract BaseProofRegistry {
+    // Core admin state
     address public registryOwner;
     bool public paused;
 
@@ -10,8 +11,10 @@ contract BaseProofRegistry {
 
     mapping(address => bool) public operators;
 
+    // Events
     event RegistryOwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
+    // Asset data
     struct Asset {
         uint256 id;
         uint256 rootId;
@@ -24,6 +27,7 @@ contract BaseProofRegistry {
         string uri;
     }
 
+    // License data
     struct License {
         uint256 id;
         uint256 assetId;
