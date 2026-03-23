@@ -10,6 +10,8 @@ contract BaseProofRegistry {
 
     mapping(address => bool) public operators;
 
+    event RegistryOwnershipTransferred(address indexed oldOwner, address indexed newOwner);
+
     struct Asset {
         uint256 id;
         uint256 rootId;
@@ -36,5 +38,6 @@ contract BaseProofRegistry {
 
     constructor() {
         registryOwner = msg.sender;
+        emit RegistryOwnershipTransferred(address(0), msg.sender);
     }
 }
