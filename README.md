@@ -1,22 +1,27 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+# BaseProofRegistry
 
-contract BaseProofRegistry {
-    address public registryOwner;
+BaseProofRegistry is a simple smart contract project for the Base ecosystem.
 
-    struct Asset {
-        uint256 id;
-        uint256 rootId;
-        uint256 parentId;
-        address author;
-        address currentOwner;
-        bytes32 contentHash;
-        uint64 createdAt;
-        bool revoked;
-        string uri;
-    }
+## Idea
 
-    constructor() {
-        registryOwner = msg.sender;
-    }
-}
+The project is focused on provenance and authenticity of digital objects.
+Users can register original content hashes, create derivative records, transfer ownership, and issue licenses.
+
+## Planned features
+
+- register original assets
+- register derivative versions
+- transfer asset ownership
+- issue licenses
+- revoke assets and licenses
+- verify content by hash
+
+## Stack
+
+- Solidity
+- Hardhat
+- Base Sepolia
+
+## Status
+
+Early development
