@@ -1,27 +1,36 @@
-# BaseProofRegistry
+# Base Proof Registry
 
-BaseProofRegistry is a simple smart contract project for the Base ecosystem.
+A simple smart contract for storing proof records on Base-compatible EVM networks.
 
-## Idea
+## Features
 
-The project is focused on provenance and authenticity of digital objects.
-Users can register original content hashes, create derivative records, transfer ownership, and issue licenses.
+- store IPFS hash
+- store timestamp
+- link proof to sender wallet
+- get total number of proofs by user
+- get proof by index
+- emit event when proof is added
 
-## Planned features
+## Contract methods
 
-- register original assets
-- register derivative versions
-- transfer asset ownership
-- issue licenses
-- revoke assets and licenses
-- verify content by hash
+### addProof(string memory _ipfsHash)
+Stores a new proof for the sender.
+
+### getProofCount(address user)
+Returns number of proofs submitted by a user.
+
+### getProof(address user, uint256 index)
+Returns proof data:
+- ipfsHash
+- timestamp
+- submitter
 
 ## Stack
 
 - Solidity
-- Hardhat
-- Base Sepolia
+- Remix
+- GitHub
 
-## Status
+## Purpose
 
-Early development
+Practice project for Base ecosystem development.
