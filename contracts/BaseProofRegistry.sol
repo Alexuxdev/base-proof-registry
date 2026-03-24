@@ -26,6 +26,8 @@ contract ProofRegistry {
                 submitter: msg.sender
             })
         );
+
+        emit ProofAdded(msg.sender, _ipfsHash, block.timestamp);
     }
 
     function getProofCount(address user) public view returns (uint256) {
