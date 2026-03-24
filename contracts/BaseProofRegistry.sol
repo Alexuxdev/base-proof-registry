@@ -1,47 +1,41 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-contract BaseProofRegistry {
-    // Core admin state
-    address public registryOwner;
-    bool public paused;
+contract ProofRegistry {
+    address public owner;
 
-    uint256 public nextAssetId = 1;
-    uint256 public nextLicenseId = 1;
-
-    mapping(address => bool) public operators;
-
-    // Events
-    event RegistryOwnershipTransferred(address indexed oldOwner, address indexed newOwner);
-
-    // Asset data
-    struct Asset {
-        uint256 id;
-        uint256 rootId;
-        uint256 parentId;
-        address author;
-        address currentOwner;
-        bytes32 contentHash;
-        uint64 createdAt;
-        bool revoked;
-        string uri;
+    struct Proof {
+        string ipfsHash;
+        uint256 timestamp;
+        address submitter;
     }
 
-    // License data
-    struct License {
-        uint256 id;
-        uint256 assetId;
-        address licensor;
-        address licensee;
-        uint64 validFrom;
-        uint64 validUntil;
-        bool exclusive;
-        bool revoked;
-        string termsURI;
-    }
+    mapping(address => Proof[]) public proofs;
 
     constructor() {
-        registryOwner = msg.sender;
-        emit RegistryOwnershipTransferred(address(0), msg.sender);
+        owner = msg.sender;
+    }
+
+    function addProof(string memory _ipfsHash) public {
+        proofs[msg.sender].push(
+            Proof({
+                ipfsHash: _ipfsHash,
+                timestamp: block.timestamp,
+                submitter: msg.sender
+            })
+        );
+    }
+
+    function getProofCount(address user) public view returns (uint256) {
+        return proofs[user].length;
+    }
+
+    function getProof(address user, uint256 index) public view returns (
+        string memory ipfsHash,
+        uint256 timestamp,
+        address submitter
+    ) {
+        Proof memory proof = proofs[user][index];
+        return (proof.ipfsHash, proof.timestamp, proof.submitter);
     }
 }
