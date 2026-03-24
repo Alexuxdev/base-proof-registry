@@ -4,6 +4,8 @@ pragma solidity ^0.8.20;
 contract ProofRegistry {
     address public owner;
 
+    event ProofAdded(address indexed user, string ipfsHash, uint256 timestamp);
+
     struct Proof {
         string ipfsHash;
         uint256 timestamp;
