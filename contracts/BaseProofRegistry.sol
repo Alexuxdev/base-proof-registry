@@ -22,9 +22,15 @@ contract BaseProofRegistry {
     mapping(address => bool) public operators;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OperatorUpdated(address indexed operator, bool allowed);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
+        _;
+    }
+
+    modifier onlyAdmin() {
+        require(msg.sender == owner || operators[msg.sender], "Not admin");
         _;
     }
 
@@ -40,5 +46,11 @@ contract BaseProofRegistry {
         owner = newOwner;
 
         emit OwnershipTransferred(previousOwner, newOwner);
+    }
+
+    function setOperator(address operator, bool allowed) external onlyOwner {
+        require(operator != address(0), "Zero address");
+        operators[operator] = allowed;
+        emit OperatorUpdated(operator, allowed);
     }
 }
