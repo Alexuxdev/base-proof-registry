@@ -118,4 +118,10 @@ contract BaseProofRegistry {
     function isCanonicalHashUsed(bytes32 canonicalHash) external view returns (bool) {
         return canonicalHashUsed[canonicalHash];
     }
+
+    function getAssetLineage(bytes32 assetId) external view returns (bytes32 rootAssetId, bytes32 parentAssetId) {
+        require(assets[assetId].exists, "Asset does not exist");
+        Asset memory asset = assets[assetId];
+        return (asset.rootAssetId, asset.parentAssetId);
+    }
 }
