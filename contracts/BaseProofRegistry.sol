@@ -19,10 +19,13 @@ contract BaseProofRegistry {
     }
 
     address public owner;
+    bool public paused;
+
     mapping(address => bool) public operators;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event OperatorUpdated(address indexed operator, bool allowed);
+    event PauseStatusChanged(bool isPaused);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
@@ -31,6 +34,11 @@ contract BaseProofRegistry {
 
     modifier onlyAdmin() {
         require(msg.sender == owner || operators[msg.sender], "Not admin");
+        _;
+    }
+
+    modifier whenNotPaused() {
+        require(!paused, "Registry paused");
         _;
     }
 
@@ -52,5 +60,10 @@ contract BaseProofRegistry {
         require(operator != address(0), "Zero address");
         operators[operator] = allowed;
         emit OperatorUpdated(operator, allowed);
+    }
+
+    function setPaused(bool _paused) external onlyOwner {
+        paused = _paused;
+        emit PauseStatusChanged(_paused);
     }
 }
