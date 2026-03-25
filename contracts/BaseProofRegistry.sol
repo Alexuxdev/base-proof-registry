@@ -124,4 +124,31 @@ contract BaseProofRegistry {
         Asset memory asset = assets[assetId];
         return (asset.rootAssetId, asset.parentAssetId);
     }
+
+    function getAsset(bytes32 assetId)
+        external
+        view
+        returns (
+            bytes32,
+            bytes32,
+            bytes32,
+            bytes32,
+            string memory,
+            address,
+            uint256
+        )
+    {
+        require(assets[assetId].exists, "Asset does not exist");
+        Asset memory asset = assets[assetId];
+
+        return (
+            asset.assetId,
+            asset.canonicalHash,
+            asset.rootAssetId,
+            asset.parentAssetId,
+            asset.metadataURI,
+            asset.registrant,
+            asset.createdAt
+        );
+    }
 }
