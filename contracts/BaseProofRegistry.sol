@@ -1,45 +1,44 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-contract ProofRegistry {
-    address public owner;
-
-    event ProofAdded(address indexed user, string ipfsHash, uint256 timestamp);
-
-    struct Proof {
-        string ipfsHash;
-        uint256 timestamp;
-        address submitter;
+contract BaseProofRegistry {
+    struct Asset {
+        bytes32 assetId;
+        bytes32 canonicalHash;
+        string metadataURI;
+        address registrant;
+        uint256 createdAt;
     }
 
-    mapping(address => Proof[]) public proofs;
+    struct License {
+        bytes32 licenseId;
+        bytes32 assetId;
+        address licensee;
+        string termsURI;
+        uint256 createdAt;
+    }
+
+    address public owner;
+    mapping(address => bool) public operators;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not owner");
+        _;
+    }
 
     constructor() {
         owner = msg.sender;
+        emit OwnershipTransferred(address(0), msg.sender);
     }
 
-    function addProof(string memory _ipfsHash) public {
-        proofs[msg.sender].push(
-            Proof({
-                ipfsHash: _ipfsHash,
-                timestamp: block.timestamp,
-                submitter: msg.sender
-            })
-        );
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "Zero address");
 
-        emit ProofAdded(msg.sender, _ipfsHash, block.timestamp);
-    }
+        address previousOwner = owner;
+        owner = newOwner;
 
-    function getProofCount(address user) public view returns (uint256) {
-        return proofs[user].length;
-    }
-
-    function getProof(address user, uint256 index) public view returns (
-        string memory ipfsHash,
-        uint256 timestamp,
-        address submitter
-    ) {
-        Proof memory proof = proofs[user][index];
-        return (proof.ipfsHash, proof.timestamp, proof.submitter);
+        emit OwnershipTransferred(previousOwner, newOwner);
     }
 }
