@@ -63,6 +63,7 @@ contract BaseProofRegistry {
     }
 
     function setPaused(bool _paused) external onlyOwner {
+        require(paused != _paused, "Already set");
         paused = _paused;
         emit PauseStatusChanged(_paused);
     }
