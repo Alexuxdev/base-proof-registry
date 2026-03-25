@@ -114,4 +114,8 @@ contract BaseProofRegistry {
             metadataURI
         );
     }
+
+    function isCanonicalHashUsed(bytes32 canonicalHash) external view returns (bool) {
+        return canonicalHashUsed[canonicalHash];
+    }
 }
