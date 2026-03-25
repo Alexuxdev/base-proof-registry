@@ -86,11 +86,7 @@ contract BaseProofRegistry {
         bytes32 canonicalHash,
         string calldata metadataURI
     ) external onlyAdmin whenNotPaused {
-        require(assetId != bytes32(0), "Invalid assetId");
-        require(canonicalHash != bytes32(0), "Invalid canonical hash");
-        require(bytes(metadataURI).length > 0, "Empty metadata URI");
-        require(!assets[assetId].exists, "Asset already exists");
-        require(!canonicalHashUsed[canonicalHash], "Canonical hash already used");
+        _validateOriginalRegistration(assetId, canonicalHash, metadataURI);
 
         assets[assetId] = Asset({
             assetId: assetId,
@@ -113,6 +109,18 @@ contract BaseProofRegistry {
             msg.sender,
             metadataURI
         );
+    }
+
+    function _validateOriginalRegistration(
+        bytes32 assetId,
+        bytes32 canonicalHash,
+        string calldata metadataURI
+    ) internal view {
+        require(assetId != bytes32(0), "Invalid assetId");
+        require(canonicalHash != bytes32(0), "Invalid canonical hash");
+        require(bytes(metadataURI).length > 0, "Empty metadata URI");
+        require(!assets[assetId].exists, "Asset already exists");
+        require(!canonicalHashUsed[canonicalHash], "Canonical hash already used");
     }
 
     function isCanonicalHashUsed(bytes32 canonicalHash) external view returns (bool) {
