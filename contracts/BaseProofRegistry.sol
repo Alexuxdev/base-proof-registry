@@ -27,6 +27,7 @@ contract BaseProofRegistry {
     mapping(address => bool) public operators;
     mapping(bytes32 => Asset) public assets;
     mapping(bytes32 => bool) public canonicalHashUsed;
+    mapping(bytes32 => bytes32[]) public childrenByParent;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event OperatorUpdated(address indexed operator, bool allowed);
@@ -140,6 +141,7 @@ contract BaseProofRegistry {
         });
 
         canonicalHashUsed[canonicalHash] = true;
+        childrenByParent[parentAssetId].push(assetId);
 
         emit AssetRegistered(
             assetId,
