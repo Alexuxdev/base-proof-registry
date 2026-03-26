@@ -126,10 +126,12 @@ contract BaseProofRegistry {
         require(!canonicalHashUsed[canonicalHash], "Canonical hash already used");
         require(assets[parentAssetId].exists, "Parent asset does not exist");
 
+        bytes32 rootAssetId = assets[parentAssetId].rootAssetId;
+
         assets[assetId] = Asset({
             assetId: assetId,
             canonicalHash: canonicalHash,
-            rootAssetId: parentAssetId,
+            rootAssetId: rootAssetId,
             parentAssetId: parentAssetId,
             metadataURI: metadataURI,
             registrant: msg.sender,
@@ -142,7 +144,7 @@ contract BaseProofRegistry {
         emit AssetRegistered(
             assetId,
             canonicalHash,
-            parentAssetId,
+            rootAssetId,
             parentAssetId,
             msg.sender,
             metadataURI
