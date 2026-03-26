@@ -112,6 +112,43 @@ contract BaseProofRegistry {
         );
     }
 
+    function registerDerivative(
+        bytes32 assetId,
+        bytes32 canonicalHash,
+        bytes32 parentAssetId,
+        string calldata metadataURI
+    ) external onlyAdmin whenNotPaused {
+        require(assetId != bytes32(0), "Invalid assetId");
+        require(canonicalHash != bytes32(0), "Invalid canonical hash");
+        require(parentAssetId != bytes32(0), "Invalid parent assetId");
+        require(bytes(metadataURI).length > 0, "Empty metadata URI");
+        require(!assets[assetId].exists, "Asset already exists");
+        require(!canonicalHashUsed[canonicalHash], "Canonical hash already used");
+        require(assets[parentAssetId].exists, "Parent asset does not exist");
+
+        assets[assetId] = Asset({
+            assetId: assetId,
+            canonicalHash: canonicalHash,
+            rootAssetId: parentAssetId,
+            parentAssetId: parentAssetId,
+            metadataURI: metadataURI,
+            registrant: msg.sender,
+            createdAt: block.timestamp,
+            exists: true
+        });
+
+        canonicalHashUsed[canonicalHash] = true;
+
+        emit AssetRegistered(
+            assetId,
+            canonicalHash,
+            parentAssetId,
+            parentAssetId,
+            msg.sender,
+            metadataURI
+        );
+    }
+
     function _validateOriginalRegistration(
         bytes32 assetId,
         bytes32 canonicalHash,
