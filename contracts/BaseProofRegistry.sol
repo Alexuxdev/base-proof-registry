@@ -10,6 +10,7 @@ contract BaseProofRegistry {
         string metadataURI;
         address registrant;
         uint256 createdAt;
+        bool revoked;
         bool exists;
     }
 
@@ -98,6 +99,7 @@ contract BaseProofRegistry {
             metadataURI: metadataURI,
             registrant: msg.sender,
             createdAt: block.timestamp,
+            revoked: false,
             exists: true
         });
 
@@ -126,6 +128,7 @@ contract BaseProofRegistry {
         require(!assets[assetId].exists, "Asset already exists");
         require(!canonicalHashUsed[canonicalHash], "Canonical hash already used");
         require(assets[parentAssetId].exists, "Parent asset does not exist");
+        require(!assets[parentAssetId].revoked, "Parent asset is revoked");
 
         bytes32 rootAssetId = assets[parentAssetId].rootAssetId;
 
@@ -137,6 +140,7 @@ contract BaseProofRegistry {
             metadataURI: metadataURI,
             registrant: msg.sender,
             createdAt: block.timestamp,
+            revoked: false,
             exists: true
         });
 
