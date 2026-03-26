@@ -86,6 +86,7 @@ contract BaseProofRegistry {
         bytes32 canonicalHash,
         string calldata metadataURI
     ) external onlyAdmin whenNotPaused {
+        require(bytes(metadataURI).length > 0, "Empty metadata URI");
         _validateOriginalRegistration(assetId, canonicalHash, metadataURI);
 
         assets[assetId] = Asset({
