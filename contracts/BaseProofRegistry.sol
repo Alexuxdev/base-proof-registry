@@ -51,6 +51,10 @@ contract BaseProofRegistry {
         string previousMetadataURI,
         string newMetadataURI
     );
+    event AssetRevocationSet(
+        bytes32 indexed assetId,
+        bool revokedStatus
+    );
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
@@ -223,6 +227,8 @@ contract BaseProofRegistry {
         require(assets[assetId].revoked != revokedStatus, "Already set");
 
         assets[assetId].revoked = revokedStatus;
+
+        emit AssetRevocationSet(assetId, revokedStatus);
     }
 
     function _validateOriginalRegistration(
