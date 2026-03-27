@@ -179,6 +179,22 @@ contract BaseProofRegistry {
         emit AssetOwnershipTransferred(assetId, previousRegistrant, newRegistrant);
     }
 
+    function updateAssetURI(bytes32 assetId, string calldata newMetadataURI)
+        external
+        whenNotPaused
+    {
+        require(assetId != bytes32(0), "Invalid assetId");
+        require(assets[assetId].exists, "Asset does not exist");
+        require(
+            msg.sender == assets[assetId].registrant ||
+                msg.sender == owner ||
+                operators[msg.sender],
+            "Not authorized"
+        );
+
+        assets[assetId].metadataURI = newMetadataURI;
+    }
+
     function _validateOriginalRegistration(
         bytes32 assetId,
         bytes32 canonicalHash,
