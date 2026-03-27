@@ -154,6 +154,18 @@ contract BaseProofRegistry {
         );
     }
 
+    function transferAssetOwnership(bytes32 assetId, address newRegistrant)
+        external
+        onlyAdmin
+        whenNotPaused
+    {
+        require(assetId != bytes32(0), "Invalid assetId");
+        require(newRegistrant != address(0), "Zero address");
+        require(assets[assetId].exists, "Asset does not exist");
+
+        assets[assetId].registrant = newRegistrant;
+    }
+
     function _validateOriginalRegistration(
         bytes32 assetId,
         bytes32 canonicalHash,
