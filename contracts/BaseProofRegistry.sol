@@ -170,16 +170,19 @@ contract BaseProofRegistry {
     {
         require(assetId != bytes32(0), "Invalid assetId");
         require(newRegistrant != address(0), "Zero address");
-        require(assets[assetId].exists, "Asset does not exist");
+
+        Asset storage asset = _getMutableAsset(assetId);
+
         require(
-            msg.sender == assets[assetId].registrant ||
+            msg.sender == asset.registrant ||
                 msg.sender == owner ||
                 operators[msg.sender],
             "Not authorized"
         );
+        require(asset.registrant != newRegistrant, "Already registrant");
 
-        address previousRegistrant = assets[assetId].registrant;
-        assets[assetId].registrant = newRegistrant;
+        address previousRegistrant = asset.registrant;
+        asset.registrant = newRegistrant;
 
         emit AssetOwnershipTransferred(assetId, previousRegistrant, newRegistrant);
     }
@@ -189,16 +192,23 @@ contract BaseProofRegistry {
         whenNotPaused
     {
         require(assetId != bytes32(0), "Invalid assetId");
-        require(assets[assetId].exists, "Asset does not exist");
+        require(bytes(newMetadataURI).length > 0, "Empty metadata URI");
+
+        Asset storage asset = _getMutableAsset(assetId);
+
         require(
-            msg.sender == assets[assetId].registrant ||
+            msg.sender == asset.registrant ||
                 msg.sender == owner ||
                 operators[msg.sender],
             "Not authorized"
         );
+        require(
+            keccak256(bytes(asset.metadataURI)) != keccak256(bytes(newMetadataURI)),
+            "Metadata URI unchanged"
+        );
 
-        string memory previousMetadataURI = assets[assetId].metadataURI;
-        assets[assetId].metadataURI = newMetadataURI;
+        string memory previousMetadataURI = asset.metadataURI;
+        asset.metadataURI = newMetadataURI;
 
         emit AssetURIUpdated(assetId, previousMetadataURI, newMetadataURI);
     }
@@ -231,6 +241,12 @@ contract BaseProofRegistry {
         require(!assets[parentAssetId].revoked, "Parent asset is revoked");
 
         rootAssetId = assets[parentAssetId].rootAssetId;
+    }
+
+    function _getMutableAsset(bytes32 assetId) internal view returns (Asset storage asset) {
+        require(assets[assetId].exists, "Asset does not exist");
+        require(!assets[assetId].revoked, "Asset is revoked");
+        asset = assets[assetId];
     }
 
     function isCanonicalHashUsed(bytes32 canonicalHash) external view returns (bool) {
