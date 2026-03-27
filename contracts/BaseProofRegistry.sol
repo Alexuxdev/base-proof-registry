@@ -176,7 +176,7 @@ contract BaseProofRegistry {
         require(newRegistrant != address(0), "Zero address");
 
         Asset storage asset = _getMutableAsset(assetId);
-
+        require(!asset.revoked, "Asset is revoked");
         require(
             msg.sender == asset.registrant ||
                 msg.sender == owner ||
@@ -199,7 +199,7 @@ contract BaseProofRegistry {
         require(bytes(newMetadataURI).length > 0, "Empty metadata URI");
 
         Asset storage asset = _getMutableAsset(assetId);
-
+        require(!asset.revoked, "Asset is revoked");
         require(
             msg.sender == asset.registrant ||
                 msg.sender == owner ||
@@ -263,7 +263,6 @@ contract BaseProofRegistry {
 
     function _getMutableAsset(bytes32 assetId) internal view returns (Asset storage asset) {
         require(assets[assetId].exists, "Asset does not exist");
-        require(!assets[assetId].revoked, "Asset is revoked");
         asset = assets[assetId];
     }
 
