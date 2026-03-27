@@ -41,6 +41,11 @@ contract BaseProofRegistry {
         address registrant,
         string metadataURI
     );
+    event AssetOwnershipTransferred(
+        bytes32 indexed assetId,
+        address indexed previousRegistrant,
+        address indexed newRegistrant
+    );
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
@@ -168,7 +173,10 @@ contract BaseProofRegistry {
             "Not authorized"
         );
 
+        address previousRegistrant = assets[assetId].registrant;
         assets[assetId].registrant = newRegistrant;
+
+        emit AssetOwnershipTransferred(assetId, previousRegistrant, newRegistrant);
     }
 
     function _validateOriginalRegistration(
