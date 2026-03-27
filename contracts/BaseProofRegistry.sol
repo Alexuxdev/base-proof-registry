@@ -172,7 +172,7 @@ contract BaseProofRegistry {
         external
         whenNotPaused
     {
-        require(assetId != bytes32(0), "Invalid assetId");
+        _validateAssetId(assetId);
         require(newRegistrant != address(0), "Zero address");
 
         Asset storage asset = _getMutableAsset(assetId);
@@ -194,7 +194,7 @@ contract BaseProofRegistry {
         external
         whenNotPaused
     {
-        require(assetId != bytes32(0), "Invalid assetId");
+        _validateAssetId(assetId);
         require(bytes(newMetadataURI).length > 0, "Empty metadata URI");
 
         Asset storage asset = _getMutableAsset(assetId);
@@ -220,7 +220,7 @@ contract BaseProofRegistry {
         onlyAdmin
         whenNotPaused
     {
-        require(assetId != bytes32(0), "Invalid assetId");
+        _validateAssetId(assetId);
         require(assets[assetId].exists, "Asset does not exist");
         require(assets[assetId].revoked != revokedStatus, "Already set");
 
@@ -229,12 +229,16 @@ contract BaseProofRegistry {
         emit AssetRevocationSet(assetId, revokedStatus);
     }
 
+    function _validateAssetId(bytes32 assetId) internal pure {
+        require(assetId != bytes32(0), "Invalid assetId");
+    }
+
     function _validateOriginalRegistration(
         bytes32 assetId,
         bytes32 canonicalHash,
         string calldata metadataURI
     ) internal view {
-        require(assetId != bytes32(0), "Invalid assetId");
+        _validateAssetId(assetId);
         require(canonicalHash != bytes32(0), "Invalid canonical hash");
         require(bytes(metadataURI).length > 0, "Empty metadata URI");
         require(!assets[assetId].exists, "Asset already exists");
@@ -247,7 +251,7 @@ contract BaseProofRegistry {
         bytes32 parentAssetId,
         string calldata metadataURI
     ) internal view returns (bytes32 rootAssetId) {
-        require(assetId != bytes32(0), "Invalid assetId");
+        _validateAssetId(assetId);
         require(canonicalHash != bytes32(0), "Invalid canonical hash");
         require(parentAssetId != bytes32(0), "Invalid parent assetId");
         require(bytes(metadataURI).length > 0, "Empty metadata URI");
