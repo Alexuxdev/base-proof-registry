@@ -213,6 +213,18 @@ contract BaseProofRegistry {
         emit AssetURIUpdated(assetId, previousMetadataURI, newMetadataURI);
     }
 
+    function setAssetRevoked(bytes32 assetId, bool revokedStatus)
+        external
+        onlyAdmin
+        whenNotPaused
+    {
+        require(assetId != bytes32(0), "Invalid assetId");
+        require(assets[assetId].exists, "Asset does not exist");
+        require(assets[assetId].revoked != revokedStatus, "Already set");
+
+        assets[assetId].revoked = revokedStatus;
+    }
+
     function _validateOriginalRegistration(
         bytes32 assetId,
         bytes32 canonicalHash,
