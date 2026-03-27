@@ -46,6 +46,11 @@ contract BaseProofRegistry {
         address indexed previousRegistrant,
         address indexed newRegistrant
     );
+    event AssetURIUpdated(
+        bytes32 indexed assetId,
+        string previousMetadataURI,
+        string newMetadataURI
+    );
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
@@ -192,7 +197,10 @@ contract BaseProofRegistry {
             "Not authorized"
         );
 
+        string memory previousMetadataURI = assets[assetId].metadataURI;
         assets[assetId].metadataURI = newMetadataURI;
+
+        emit AssetURIUpdated(assetId, previousMetadataURI, newMetadataURI);
     }
 
     function _validateOriginalRegistration(
