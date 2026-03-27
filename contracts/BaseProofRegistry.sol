@@ -156,12 +156,17 @@ contract BaseProofRegistry {
 
     function transferAssetOwnership(bytes32 assetId, address newRegistrant)
         external
-        onlyAdmin
         whenNotPaused
     {
         require(assetId != bytes32(0), "Invalid assetId");
         require(newRegistrant != address(0), "Zero address");
         require(assets[assetId].exists, "Asset does not exist");
+        require(
+            msg.sender == assets[assetId].registrant ||
+                msg.sender == owner ||
+                operators[msg.sender],
+            "Not authorized"
+        );
 
         assets[assetId].registrant = newRegistrant;
     }
