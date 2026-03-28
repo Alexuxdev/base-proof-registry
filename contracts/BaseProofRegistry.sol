@@ -226,6 +226,8 @@ contract BaseProofRegistry {
         require(assets[assetId].revoked != revokedStatus, "Already set");
 
         assets[assetId].revoked = revokedStatus;
+
+        emit AssetRevocationSet(assetId, revokedStatus);
     }
 
     function issueLicense(
