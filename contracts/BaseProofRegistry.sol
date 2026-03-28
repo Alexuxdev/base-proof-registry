@@ -173,10 +173,9 @@ contract BaseProofRegistry {
         external
         whenNotPaused
     {
-        _validateAssetId(assetId);
         require(newRegistrant != address(0), "Zero address");
 
-        Asset storage asset = _getMutableAsset(assetId);
+        Asset storage asset = _getActiveAsset(assetId);
         require(
             msg.sender == asset.registrant ||
                 msg.sender == owner ||
@@ -195,10 +194,9 @@ contract BaseProofRegistry {
         external
         whenNotPaused
     {
-        _validateAssetId(assetId);
         require(bytes(newMetadataURI).length > 0, "Empty metadata URI");
 
-        Asset storage asset = _getMutableAsset(assetId);
+        Asset storage asset = _getActiveAsset(assetId);
         require(
             msg.sender == asset.registrant ||
                 msg.sender == owner ||
@@ -221,11 +219,10 @@ contract BaseProofRegistry {
         onlyAdmin
         whenNotPaused
     {
-        _validateAssetId(assetId);
-        require(assets[assetId].exists, "Asset does not exist");
-        require(assets[assetId].revoked != revokedStatus, "Already set");
+        Asset storage asset = _getExistingAsset(assetId);
+        require(asset.revoked != revokedStatus, "Already set");
 
-        assets[assetId].revoked = revokedStatus;
+        asset.revoked = revokedStatus;
 
         emit AssetRevocationSet(assetId, revokedStatus);
     }
@@ -237,12 +234,11 @@ contract BaseProofRegistry {
         string calldata termsURI
     ) external onlyAdmin whenNotPaused {
         require(licenseId != bytes32(0), "Invalid licenseId");
-        _validateAssetId(assetId);
         require(licensee != address(0), "Zero address");
         require(bytes(termsURI).length > 0, "Empty terms URI");
-        require(assets[assetId].exists, "Asset does not exist");
-        require(!assets[assetId].revoked, "Asset is revoked");
         require(licenses[licenseId].createdAt == 0, "License already exists");
+
+        _getActiveAsset(assetId);
 
         licenses[licenseId] = License({
             licenseId: licenseId,
@@ -281,23 +277,31 @@ contract BaseProofRegistry {
         require(bytes(metadataURI).length > 0, "Empty metadata URI");
         require(!assets[assetId].exists, "Asset already exists");
         require(!canonicalHashUsed[canonicalHash], "Canonical hash already used");
-        require(assets[parentAssetId].exists, "Parent asset does not exist");
-        require(!assets[parentAssetId].revoked, "Parent asset is revoked");
 
-        rootAssetId = assets[parentAssetId].rootAssetId;
+        Asset storage parentAsset = _getActiveAsset(parentAssetId);
+        rootAssetId = parentAsset.rootAssetId;
     }
 
-    function _getMutableAsset(bytes32 assetId) internal view returns (Asset storage asset) {
+    function _getExistingAsset(bytes32 assetId) internal view returns (Asset storage asset) {
+        _validateAssetId(assetId);
         require(assets[assetId].exists, "Asset does not exist");
-        require(!assets[assetId].revoked, "Asset is revoked");
         asset = assets[assetId];
+    }
+
+    function _getActiveAsset(bytes32 assetId) internal view returns (Asset storage asset) {
+        asset = _getExistingAsset(assetId);
+        require(!asset.revoked, "Asset is revoked");
     }
 
     function isCanonicalHashUsed(bytes32 canonicalHash) external view returns (bool) {
         return canonicalHashUsed[canonicalHash];
     }
 
-    function getAssetLineage(bytes32 assetId) external view returns (bytes32 rootAssetId, bytes32 parentAssetId) {
+    function getAssetLineage(bytes32 assetId)
+        external
+        view
+        returns (bytes32 rootAssetId, bytes32 parentAssetId)
+    {
         require(assets[assetId].exists, "Asset does not exist");
         Asset memory asset = assets[assetId];
         return (asset.rootAssetId, asset.parentAssetId);
