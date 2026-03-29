@@ -249,7 +249,7 @@ contract BaseProofRegistry {
         });
     }
 
-    function _validateAssetId(bytes32 assetId) internal pure {
+    function _requireValidAssetId(bytes32 assetId) internal pure {
         require(assetId != bytes32(0), "Invalid assetId");
     }
 
@@ -258,7 +258,7 @@ contract BaseProofRegistry {
         bytes32 canonicalHash,
         string calldata metadataURI
     ) internal view {
-        _validateAssetId(assetId);
+        _requireValidAssetId(assetId);
         require(canonicalHash != bytes32(0), "Invalid canonical hash");
         require(bytes(metadataURI).length > 0, "Empty metadata URI");
         require(!assets[assetId].exists, "Asset already exists");
@@ -271,9 +271,9 @@ contract BaseProofRegistry {
         bytes32 parentAssetId,
         string calldata metadataURI
     ) internal view returns (bytes32 rootAssetId) {
-        _validateAssetId(assetId);
+        _requireValidAssetId(assetId);
+        _requireValidAssetId(parentAssetId);
         require(canonicalHash != bytes32(0), "Invalid canonical hash");
-        require(parentAssetId != bytes32(0), "Invalid parent assetId");
         require(bytes(metadataURI).length > 0, "Empty metadata URI");
         require(!assets[assetId].exists, "Asset already exists");
         require(!canonicalHashUsed[canonicalHash], "Canonical hash already used");
@@ -283,7 +283,7 @@ contract BaseProofRegistry {
     }
 
     function _getExistingAsset(bytes32 assetId) internal view returns (Asset storage asset) {
-        _validateAssetId(assetId);
+        _requireValidAssetId(assetId);
         require(assets[assetId].exists, "Asset does not exist");
         asset = assets[assetId];
     }
@@ -302,8 +302,7 @@ contract BaseProofRegistry {
         view
         returns (bytes32 rootAssetId, bytes32 parentAssetId)
     {
-        require(assets[assetId].exists, "Asset does not exist");
-        Asset memory asset = assets[assetId];
+        Asset memory asset = _getExistingAsset(assetId);
         return (asset.rootAssetId, asset.parentAssetId);
     }
 
@@ -320,8 +319,7 @@ contract BaseProofRegistry {
             uint256
         )
     {
-        require(assets[assetId].exists, "Asset does not exist");
-        Asset memory asset = assets[assetId];
+        Asset memory asset = _getExistingAsset(assetId);
 
         return (
             asset.assetId,
