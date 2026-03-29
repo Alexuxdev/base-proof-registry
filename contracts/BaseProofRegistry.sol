@@ -32,6 +32,7 @@ contract BaseProofRegistry {
     mapping(bytes32 => License) public licenses;
     mapping(bytes32 => bool) public licenseExists;
     mapping(bytes32 => address) public licenseIssuer;
+    mapping(bytes32 => bytes32[]) public licensesByAsset;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event OperatorUpdated(address indexed operator, bool allowed);
@@ -252,6 +253,7 @@ contract BaseProofRegistry {
 
         licenseExists[licenseId] = true;
         licenseIssuer[licenseId] = msg.sender;
+        licensesByAsset[assetId].push(licenseId);
     }
 
     function _requireValidAssetId(bytes32 assetId) internal pure {
