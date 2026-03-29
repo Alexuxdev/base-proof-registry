@@ -59,6 +59,13 @@ contract BaseProofRegistry {
         bytes32 indexed assetId,
         bool revokedStatus
     );
+    event LicenseIssued(
+        bytes32 indexed licenseId,
+        bytes32 indexed assetId,
+        address indexed licensee,
+        string termsURI,
+        uint256 createdAt
+    );
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
@@ -255,6 +262,14 @@ contract BaseProofRegistry {
         licenseExists[licenseId] = true;
         licenseIssuer[licenseId] = msg.sender;
         licensesByAsset[assetId].push(licenseId);
+
+        emit LicenseIssued(
+            licenseId,
+            assetId,
+            licensee,
+            termsURI,
+            block.timestamp
+        );
     }
 
     function _requireValidAssetId(bytes32 assetId) internal pure {
