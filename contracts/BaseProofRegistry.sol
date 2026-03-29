@@ -30,6 +30,8 @@ contract BaseProofRegistry {
     mapping(bytes32 => bool) public canonicalHashUsed;
     mapping(bytes32 => bytes32[]) public childrenByParent;
     mapping(bytes32 => License) public licenses;
+    mapping(bytes32 => bool) public licenseExists;
+    mapping(bytes32 => address) public licenseIssuer;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event OperatorUpdated(address indexed operator, bool allowed);
@@ -236,7 +238,7 @@ contract BaseProofRegistry {
         require(licenseId != bytes32(0), "Invalid licenseId");
         require(licensee != address(0), "Zero address");
         require(bytes(termsURI).length > 0, "Empty terms URI");
-        require(licenses[licenseId].createdAt == 0, "License already exists");
+        require(!licenseExists[licenseId], "License already exists");
 
         _getActiveAsset(assetId);
 
@@ -247,6 +249,9 @@ contract BaseProofRegistry {
             termsURI: termsURI,
             createdAt: block.timestamp
         });
+
+        licenseExists[licenseId] = true;
+        licenseIssuer[licenseId] = msg.sender;
     }
 
     function _requireValidAssetId(bytes32 assetId) internal pure {
