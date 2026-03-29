@@ -241,7 +241,8 @@ contract BaseProofRegistry {
         require(bytes(termsURI).length > 0, "Empty terms URI");
         require(!licenseExists[licenseId], "License already exists");
 
-        _getActiveAsset(assetId);
+        Asset storage asset = _getActiveAsset(assetId);
+        require(block.timestamp >= asset.createdAt, "Invalid license timestamp");
 
         licenses[licenseId] = License({
             licenseId: licenseId,
