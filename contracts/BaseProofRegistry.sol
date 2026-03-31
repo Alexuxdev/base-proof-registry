@@ -285,10 +285,16 @@ contract BaseProofRegistry {
         );
     }
 
-    function revokeLicense(bytes32 licenseId) external onlyAdmin whenNotPaused {
+    function revokeLicense(bytes32 licenseId) external whenNotPaused {
         require(licenseId != bytes32(0), "Invalid licenseId");
         require(licenseExists[licenseId], "License does not exist");
         require(!licenseRevoked[licenseId], "License already revoked");
+        require(
+            msg.sender == owner ||
+                operators[msg.sender] ||
+                msg.sender == licenseIssuer[licenseId],
+            "Not authorized"
+        );
 
         licenseRevoked[licenseId] = true;
 
