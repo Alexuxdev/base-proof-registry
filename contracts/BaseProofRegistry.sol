@@ -30,11 +30,11 @@ contract BaseProofRegistry {
     mapping(bytes32 => bool) public canonicalHashUsed;
     mapping(bytes32 => bytes32[]) public childrenByParent;
     mapping(bytes32 => License) public licenses;
-    mapping(bytes32 => bool) public licenseExists;
-    mapping(bytes32 => address) public licenseIssuer;
-    mapping(bytes32 => bytes32[]) public licensesByAsset;
-    mapping(bytes32 => bool) public hasExclusiveLicense;
-    mapping(bytes32 => bool) public licenseRevoked;
+    mapping(bytes32 => bool) public issuedLicenses;
+    mapping(bytes32 => address) public licenseIssuedBy;
+    mapping(bytes32 => bytes32[]) public assetLicenses;
+    mapping(bytes32 => bool) public assetHasExclusiveLicense;
+    mapping(bytes32 => bool) public revokedLicenses;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event OperatorUpdated(address indexed operator, bool allowed);
@@ -261,8 +261,8 @@ contract BaseProofRegistry {
 
         bool isExclusive = keccak256(bytes(termsURI)) == keccak256(bytes("exclusive"));
         if (isExclusive) {
-            require(!hasExclusiveLicense[assetId], "Exclusive license already issued");
-            hasExclusiveLicense[assetId] = true;
+            require(!assetHasExclusiveLicense[assetId], "Exclusive license already issued");
+            assetHasExclusiveLicense[assetId] = true;
         }
 
         licenses[licenseId] = License({
@@ -273,9 +273,9 @@ contract BaseProofRegistry {
             createdAt: block.timestamp
         });
 
-        licenseExists[licenseId] = true;
-        licenseIssuer[licenseId] = msg.sender;
-        licensesByAsset[assetId].push(licenseId);
+        issuedLicenses[licenseId] = true;
+        licenseIssuedBy[licenseId] = msg.sender;
+        assetLicenses[assetId].push(licenseId);
 
         emit LicenseIssued(
             licenseId,
@@ -288,22 +288,30 @@ contract BaseProofRegistry {
 
     function revokeLicense(bytes32 licenseId) external whenNotPaused {
         require(licenseId != bytes32(0), "Invalid licenseId");
-        require(licenseExists[licenseId], "License does not exist");
-        require(!licenseRevoked[licenseId], "License already revoked");
+        require(issuedLicenses[licenseId], "License does not exist");
+        require(!revokedLicenses[licenseId], "License already revoked");
         require(
             msg.sender == owner ||
                 operators[msg.sender] ||
-                msg.sender == licenseIssuer[licenseId],
+                msg.sender == licenseIssuedBy[licenseId],
             "Not authorized"
         );
 
-        licenseRevoked[licenseId] = true;
+        revokedLicenses[licenseId] = true;
 
         emit LicenseRevoked(
             licenseId,
             licenses[licenseId].assetId,
             msg.sender
         );
+    }
+
+    function verifyHash(bytes32 assetId, bytes32 contentHash) external view returns (bool) {
+        if (!assets[assetId].exists) {
+            return false;
+        }
+
+        return assets[assetId].canonicalHash == contentHash;
     }
 
     function _requireValidAssetId(bytes32 assetId) internal pure {
@@ -348,7 +356,7 @@ contract BaseProofRegistry {
         require(licenseId != bytes32(0), "Invalid licenseId");
         require(licensee != address(0), "Zero address");
         require(bytes(termsURI).length > 0, "Empty terms URI");
-        require(!licenseExists[licenseId], "License already exists");
+        require(!issuedLicenses[licenseId], "License already exists");
 
         asset = _getExistingAsset(assetId);
         require(block.timestamp >= asset.createdAt, "Invalid license timestamp");
