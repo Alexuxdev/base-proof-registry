@@ -250,13 +250,12 @@ contract BaseProofRegistry {
         address licensee,
         string calldata termsURI
     ) external onlyAdmin whenNotPaused {
-        require(licenseId != bytes32(0), "Invalid licenseId");
-        require(licensee != address(0), "Zero address");
-        require(bytes(termsURI).length > 0, "Empty terms URI");
-        require(!licenseExists[licenseId], "License already exists");
-
-        Asset storage asset = _getActiveAsset(assetId);
-        require(block.timestamp >= asset.createdAt, "Invalid license timestamp");
+        Asset storage asset = _validateLicenseCreation(
+            licenseId,
+            assetId,
+            licensee,
+            termsURI
+        );
 
         bool isExclusive = keccak256(bytes(termsURI)) == keccak256(bytes("exclusive"));
         if (isExclusive) {
@@ -283,6 +282,8 @@ contract BaseProofRegistry {
             termsURI,
             block.timestamp
         );
+
+        asset;
     }
 
     function revokeLicense(bytes32 licenseId) external whenNotPaused {
@@ -336,6 +337,21 @@ contract BaseProofRegistry {
 
         Asset storage parentAsset = _getActiveAsset(parentAssetId);
         rootAssetId = parentAsset.rootAssetId;
+    }
+
+    function _validateLicenseCreation(
+        bytes32 licenseId,
+        bytes32 assetId,
+        address licensee,
+        string calldata termsURI
+    ) internal view returns (Asset storage asset) {
+        require(licenseId != bytes32(0), "Invalid licenseId");
+        require(licensee != address(0), "Zero address");
+        require(bytes(termsURI).length > 0, "Empty terms URI");
+        require(!licenseExists[licenseId], "License already exists");
+
+        asset = _getActiveAsset(assetId);
+        require(block.timestamp >= asset.createdAt, "Invalid license timestamp");
     }
 
     function _getExistingAsset(bytes32 assetId) internal view returns (Asset storage asset) {
