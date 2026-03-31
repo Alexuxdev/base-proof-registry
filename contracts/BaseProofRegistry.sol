@@ -257,6 +257,8 @@ contract BaseProofRegistry {
             termsURI
         );
 
+        require(!asset.revoked, "Asset is revoked");
+
         bool isExclusive = keccak256(bytes(termsURI)) == keccak256(bytes("exclusive"));
         if (isExclusive) {
             require(!hasExclusiveLicense[assetId], "Exclusive license already issued");
@@ -282,8 +284,6 @@ contract BaseProofRegistry {
             termsURI,
             block.timestamp
         );
-
-        asset;
     }
 
     function revokeLicense(bytes32 licenseId) external whenNotPaused {
@@ -350,7 +350,7 @@ contract BaseProofRegistry {
         require(bytes(termsURI).length > 0, "Empty terms URI");
         require(!licenseExists[licenseId], "License already exists");
 
-        asset = _getActiveAsset(assetId);
+        asset = _getExistingAsset(assetId);
         require(block.timestamp >= asset.createdAt, "Invalid license timestamp");
     }
 
