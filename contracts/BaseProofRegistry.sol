@@ -34,6 +34,7 @@ contract BaseProofRegistry {
     mapping(bytes32 => address) public licenseIssuer;
     mapping(bytes32 => bytes32[]) public licensesByAsset;
     mapping(bytes32 => bool) public hasExclusiveLicense;
+    mapping(bytes32 => bool) public licenseRevoked;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event OperatorUpdated(address indexed operator, bool allowed);
@@ -277,6 +278,14 @@ contract BaseProofRegistry {
             termsURI,
             block.timestamp
         );
+    }
+
+    function revokeLicense(bytes32 licenseId) external onlyAdmin whenNotPaused {
+        require(licenseId != bytes32(0), "Invalid licenseId");
+        require(licenseExists[licenseId], "License does not exist");
+        require(!licenseRevoked[licenseId], "License already revoked");
+
+        licenseRevoked[licenseId] = true;
     }
 
     function _requireValidAssetId(bytes32 assetId) internal pure {
