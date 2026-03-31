@@ -33,6 +33,7 @@ contract BaseProofRegistry {
     mapping(bytes32 => bool) public licenseExists;
     mapping(bytes32 => address) public licenseIssuer;
     mapping(bytes32 => bytes32[]) public licensesByAsset;
+    mapping(bytes32 => bool) public hasExclusiveLicense;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event OperatorUpdated(address indexed operator, bool allowed);
@@ -250,6 +251,12 @@ contract BaseProofRegistry {
 
         Asset storage asset = _getActiveAsset(assetId);
         require(block.timestamp >= asset.createdAt, "Invalid license timestamp");
+
+        bool isExclusive = keccak256(bytes(termsURI)) == keccak256(bytes("exclusive"));
+        if (isExclusive) {
+            require(!hasExclusiveLicense[assetId], "Exclusive license already issued");
+            hasExclusiveLicense[assetId] = true;
+        }
 
         licenses[licenseId] = License({
             licenseId: licenseId,
