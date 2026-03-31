@@ -344,6 +344,34 @@ contract BaseProofRegistry {
         );
     }
 
+    function getLicense(bytes32 licenseId)
+        external
+        view
+        returns (
+            bytes32,
+            bytes32,
+            address,
+            string memory,
+            uint256,
+            bool,
+            address
+        )
+    {
+        require(issuedLicenses[licenseId], "License does not exist");
+
+        License memory license = licenses[licenseId];
+
+        return (
+            license.licenseId,
+            license.assetId,
+            license.licensee,
+            license.termsURI,
+            license.createdAt,
+            revokedLicenses[licenseId],
+            licenseIssuedBy[licenseId]
+        );
+    }
+
     function _requireValidAssetId(bytes32 assetId) internal pure {
         require(assetId != bytes32(0), "Invalid assetId");
     }
