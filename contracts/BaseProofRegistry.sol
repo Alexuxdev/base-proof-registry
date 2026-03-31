@@ -314,6 +314,36 @@ contract BaseProofRegistry {
         return assets[assetId].canonicalHash == contentHash;
     }
 
+    function getAsset(bytes32 assetId)
+        external
+        view
+        returns (
+            bytes32,
+            bytes32,
+            bytes32,
+            bytes32,
+            string memory,
+            address,
+            uint256,
+            bool,
+            bool
+        )
+    {
+        Asset memory asset = _getExistingAsset(assetId);
+
+        return (
+            asset.assetId,
+            asset.canonicalHash,
+            asset.rootAssetId,
+            asset.parentAssetId,
+            asset.metadataURI,
+            asset.registrant,
+            asset.createdAt,
+            asset.revoked,
+            asset.exists
+        );
+    }
+
     function _requireValidAssetId(bytes32 assetId) internal pure {
         require(assetId != bytes32(0), "Invalid assetId");
     }
@@ -384,31 +414,5 @@ contract BaseProofRegistry {
     {
         Asset memory asset = _getExistingAsset(assetId);
         return (asset.rootAssetId, asset.parentAssetId);
-    }
-
-    function getAsset(bytes32 assetId)
-        external
-        view
-        returns (
-            bytes32,
-            bytes32,
-            bytes32,
-            bytes32,
-            string memory,
-            address,
-            uint256
-        )
-    {
-        Asset memory asset = _getExistingAsset(assetId);
-
-        return (
-            asset.assetId,
-            asset.canonicalHash,
-            asset.rootAssetId,
-            asset.parentAssetId,
-            asset.metadataURI,
-            asset.registrant,
-            asset.createdAt
-        );
     }
 }
