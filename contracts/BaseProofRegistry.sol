@@ -68,6 +68,11 @@ contract BaseProofRegistry {
         string termsURI,
         uint256 createdAt
     );
+    event LicenseRevoked(
+        bytes32 indexed licenseId,
+        bytes32 indexed assetId,
+        address indexed revokedBy
+    );
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
@@ -286,6 +291,12 @@ contract BaseProofRegistry {
         require(!licenseRevoked[licenseId], "License already revoked");
 
         licenseRevoked[licenseId] = true;
+
+        emit LicenseRevoked(
+            licenseId,
+            licenses[licenseId].assetId,
+            msg.sender
+        );
     }
 
     function _requireValidAssetId(bytes32 assetId) internal pure {
