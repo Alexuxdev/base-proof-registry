@@ -41,4 +41,18 @@ describe("BaseProofRegistry", function () {
 
     expect(await registry.isCanonicalHashUsed(canonicalHash)).to.equal(true);
   });
+
+  it("should reject duplicate canonical hash", async function () {
+    const { registry } = await loadFixture(deployRegistryFixture);
+
+    const assetId1 = ethers.id("asset-1");
+    const assetId2 = ethers.id("asset-2");
+    const canonicalHash = ethers.id("same-hash");
+
+    await registry.registerOriginal(assetId1, canonicalHash, "ipfs://asset-1");
+
+    await expect(
+      registry.registerOriginal(assetId2, canonicalHash, "ipfs://asset-2")
+    ).to.be.revertedWith("Canonical hash already used");
+  });
 });
