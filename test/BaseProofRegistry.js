@@ -9,7 +9,31 @@ describe("BaseProofRegistry", function () {
     const registry = await BaseProofRegistry.deploy();
     await registry.waitForDeployment();
 
-    return { registry, owner, operator, other };
+    const ids = {
+      asset1: ethers.id("asset-1"),
+      asset2: ethers.id("asset-2"),
+      parentAsset: ethers.id("parent-asset"),
+      derivativeAsset: ethers.id("derivative-asset"),
+      transferAsset: ethers.id("transfer-asset"),
+    };
+
+    const hashes = {
+      hash1: ethers.id("hash-1"),
+      sameHash: ethers.id("same-hash"),
+      parentHash: ethers.id("parent-hash"),
+      derivativeHash: ethers.id("derivative-hash"),
+      transferHash: ethers.id("transfer-hash"),
+    };
+
+    const uris = {
+      asset1: "ipfs://asset-1",
+      asset2: "ipfs://asset-2",
+      parent: "ipfs://parent",
+      derivative: "ipfs://derivative",
+      transfer: "ipfs://transfer",
+    };
+
+    return { registry, owner, operator, other, ids, hashes, uris };
   }
 
   it("should deploy the registry fixture", async function () {
@@ -20,94 +44,74 @@ describe("BaseProofRegistry", function () {
   });
 
   it("should register an original asset", async function () {
-    const { registry, owner } = await loadFixture(deployRegistryFixture);
+    const { registry, owner, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
 
-    const assetId = ethers.id("asset-1");
-    const canonicalHash = ethers.id("hash-1");
-    const metadataURI = "ipfs://asset-1";
+    await registry.registerOriginal(ids.asset1, hashes.hash1, uris.asset1);
 
-    await registry.registerOriginal(assetId, canonicalHash, metadataURI);
+    const asset = await registry.getAsset(ids.asset1);
 
-    const asset = await registry.getAsset(assetId);
-
-    expect(asset[0]).to.equal(assetId);
-    expect(asset[1]).to.equal(canonicalHash);
-    expect(asset[2]).to.equal(assetId);
+    expect(asset[0]).to.equal(ids.asset1);
+    expect(asset[1]).to.equal(hashes.hash1);
+    expect(asset[2]).to.equal(ids.asset1);
     expect(asset[3]).to.equal(ethers.ZeroHash);
-    expect(asset[4]).to.equal(metadataURI);
+    expect(asset[4]).to.equal(uris.asset1);
     expect(asset[5]).to.equal(owner.address);
     expect(asset[7]).to.equal(false);
     expect(asset[8]).to.equal(true);
 
-    expect(await registry.isCanonicalHashUsed(canonicalHash)).to.equal(true);
+    expect(await registry.isCanonicalHashUsed(hashes.hash1)).to.equal(true);
   });
 
   it("should reject duplicate canonical hash", async function () {
-    const { registry } = await loadFixture(deployRegistryFixture);
+    const { registry, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
 
-    const assetId1 = ethers.id("asset-1");
-    const assetId2 = ethers.id("asset-2");
-    const canonicalHash = ethers.id("same-hash");
-
-    await registry.registerOriginal(assetId1, canonicalHash, "ipfs://asset-1");
+    await registry.registerOriginal(ids.asset1, hashes.sameHash, uris.asset1);
 
     await expect(
-      registry.registerOriginal(assetId2, canonicalHash, "ipfs://asset-2")
+      registry.registerOriginal(ids.asset2, hashes.sameHash, uris.asset2)
     ).to.be.revertedWith("Canonical hash already used");
   });
 
   it("should register a derivative asset", async function () {
-    const { registry, owner } = await loadFixture(deployRegistryFixture);
+    const { registry, owner, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
 
-    const parentAssetId = ethers.id("parent-asset");
-    const parentHash = ethers.id("parent-hash");
-    const parentURI = "ipfs://parent";
-
-    await registry.registerOriginal(parentAssetId, parentHash, parentURI);
-
-    const derivativeAssetId = ethers.id("derivative-asset");
-    const derivativeHash = ethers.id("derivative-hash");
-    const derivativeURI = "ipfs://derivative";
+    await registry.registerOriginal(ids.parentAsset, hashes.parentHash, uris.parent);
 
     await registry.registerDerivative(
-      derivativeAssetId,
-      derivativeHash,
-      parentAssetId,
-      derivativeURI
+      ids.derivativeAsset,
+      hashes.derivativeHash,
+      ids.parentAsset,
+      uris.derivative
     );
 
-    const asset = await registry.getAsset(derivativeAssetId);
+    const asset = await registry.getAsset(ids.derivativeAsset);
 
-    expect(asset[0]).to.equal(derivativeAssetId);
-    expect(asset[1]).to.equal(derivativeHash);
-    expect(asset[2]).to.equal(parentAssetId);
-    expect(asset[3]).to.equal(parentAssetId);
-    expect(asset[4]).to.equal(derivativeURI);
+    expect(asset[0]).to.equal(ids.derivativeAsset);
+    expect(asset[1]).to.equal(hashes.derivativeHash);
+    expect(asset[2]).to.equal(ids.parentAsset);
+    expect(asset[3]).to.equal(ids.parentAsset);
+    expect(asset[4]).to.equal(uris.derivative);
     expect(asset[5]).to.equal(owner.address);
     expect(asset[7]).to.equal(false);
     expect(asset[8]).to.equal(true);
 
-    const children = await registry.getChildren(parentAssetId);
+    const children = await registry.getChildren(ids.parentAsset);
     expect(children.length).to.equal(1);
-    expect(children[0]).to.equal(derivativeAssetId);
+    expect(children[0]).to.equal(ids.derivativeAsset);
   });
 
   it("should transfer asset ownership", async function () {
-    const { registry, owner, other } = await loadFixture(deployRegistryFixture);
+    const { registry, owner, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
 
-    const assetId = ethers.id("transfer-asset");
-    const canonicalHash = ethers.id("transfer-hash");
-    const metadataURI = "ipfs://transfer";
+    await registry.registerOriginal(ids.transferAsset, hashes.transferHash, uris.transfer);
 
-    await registry.registerOriginal(assetId, canonicalHash, metadataURI);
+    await registry.transferAssetOwnership(ids.transferAsset, other.address);
 
-    await registry.transferAssetOwnership(assetId, other.address);
-
-    const asset = await registry.getAsset(assetId);
+    const asset = await registry.getAsset(ids.transferAsset);
     expect(asset[5]).to.equal(other.address);
 
     await expect(
-      registry.connect(owner).transferAssetOwnership(assetId, owner.address)
+      registry.connect(owner).transferAssetOwnership(ids.transferAsset, owner.address)
     ).to.be.revertedWith("Not authorized");
   });
 });
