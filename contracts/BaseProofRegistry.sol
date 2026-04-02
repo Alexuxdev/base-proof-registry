@@ -382,6 +382,28 @@ contract BaseProofRegistry {
         return assetLicenses[assetId];
     }
 
+    function isLicenseActive(bytes32 licenseId) external view returns (bool) {
+        if (!issuedLicenses[licenseId]) {
+            return false;
+        }
+
+        if (revokedLicenses[licenseId]) {
+            return false;
+        }
+
+        bytes32 assetId = licenses[licenseId].assetId;
+
+        if (!assets[assetId].exists) {
+            return false;
+        }
+
+        if (assets[assetId].revoked) {
+            return false;
+        }
+
+        return true;
+    }
+
     function _requireValidAssetId(bytes32 assetId) internal pure {
         require(assetId != bytes32(0), "Invalid assetId");
     }
