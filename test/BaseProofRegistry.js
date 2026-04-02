@@ -91,4 +91,23 @@ describe("BaseProofRegistry", function () {
     expect(children.length).to.equal(1);
     expect(children[0]).to.equal(derivativeAssetId);
   });
+
+  it("should transfer asset ownership", async function () {
+    const { registry, owner, other } = await loadFixture(deployRegistryFixture);
+
+    const assetId = ethers.id("transfer-asset");
+    const canonicalHash = ethers.id("transfer-hash");
+    const metadataURI = "ipfs://transfer";
+
+    await registry.registerOriginal(assetId, canonicalHash, metadataURI);
+
+    await registry.transferAssetOwnership(assetId, other.address);
+
+    const asset = await registry.getAsset(assetId);
+    expect(asset[5]).to.equal(other.address);
+
+    await expect(
+      registry.connect(owner).transferAssetOwnership(assetId, owner.address)
+    ).to.be.revertedWith("Not authorized");
+  });
 });
