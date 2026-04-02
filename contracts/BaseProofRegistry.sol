@@ -372,6 +372,11 @@ contract BaseProofRegistry {
         );
     }
 
+    function getChildren(bytes32 parentAssetId) external view returns (bytes32[] memory) {
+        _getExistingAsset(parentAssetId);
+        return childrenByParent[parentAssetId];
+    }
+
     function _requireValidAssetId(bytes32 assetId) internal pure {
         require(assetId != bytes32(0), "Invalid assetId");
     }
