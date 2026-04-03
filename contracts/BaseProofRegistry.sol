@@ -23,6 +23,9 @@ describe("BaseProofRegistry", function () {
       pausedChild: ethers.id("paused-child"),
       licensedAsset: ethers.id("licensed-asset"),
       license1: ethers.id("license-1"),
+      exclusiveAsset: ethers.id("exclusive-asset"),
+      exclusiveLicense1: ethers.id("exclusive-license-1"),
+      exclusiveLicense2: ethers.id("exclusive-license-2"),
     };
 
     const hashes = {
@@ -37,6 +40,7 @@ describe("BaseProofRegistry", function () {
       pausedHash: ethers.id("paused-hash"),
       pausedChildHash: ethers.id("paused-child-hash"),
       licensedHash: ethers.id("licensed-hash"),
+      exclusiveHash: ethers.id("exclusive-hash"),
     };
 
     const uris = {
@@ -54,6 +58,8 @@ describe("BaseProofRegistry", function () {
       pausedChild: "ipfs://paused-child",
       licensed: "ipfs://licensed",
       licenseTerms: "personal-use",
+      exclusive: "ipfs://exclusive",
+      exclusiveTerms: "exclusive",
     };
 
     return { registry, owner, operator, other, ids, hashes, uris };
@@ -63,11 +69,7 @@ describe("BaseProofRegistry", function () {
     await registry.registerOriginal(assetId, canonicalHash, metadataURI);
   }
 
-  async function expectStoredAsset(
-    registry,
-    assetId,
-    expected
-  ) {
+  async function expectStoredAsset(registry, assetId, expected) {
     const asset = await registry.getAsset(assetId);
 
     expect(asset[0]).to.equal(expected.assetId);
@@ -270,5 +272,27 @@ describe("BaseProofRegistry", function () {
     const assetLicenses = await registry.getAssetLicenses(ids.licensedAsset);
     expect(assetLicenses.length).to.equal(1);
     expect(assetLicenses[0]).to.equal(ids.license1);
+  });
+
+  it("should enforce exclusive license rule", async function () {
+    const { registry, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
+
+    await registerOriginalAsset(registry, ids.exclusiveAsset, hashes.exclusiveHash, uris.exclusive);
+
+    await registry.issueLicense(
+      ids.exclusiveLicense1,
+      ids.exclusiveAsset,
+      other.address,
+      uris.exclusiveTerms
+    );
+
+    await expect(
+      registry.issueLicense(
+        ids.exclusiveLicense2,
+        ids.exclusiveAsset,
+        other.address,
+        uris.exclusiveTerms
+      )
+    ).to.be.revertedWith("Exclusive license already issued");
   });
 });
