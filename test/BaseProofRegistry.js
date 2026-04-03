@@ -19,6 +19,8 @@ describe("BaseProofRegistry", function () {
       revokedAsset: ethers.id("revoked-asset"),
       childOfRevoked: ethers.id("child-of-revoked"),
       revokedLicense: ethers.id("revoked-license"),
+      pausedAsset: ethers.id("paused-asset"),
+      pausedChild: ethers.id("paused-child"),
     };
 
     const hashes = {
@@ -30,6 +32,8 @@ describe("BaseProofRegistry", function () {
       updateHash: ethers.id("update-hash"),
       revokedHash: ethers.id("revoked-hash"),
       childRevokedHash: ethers.id("child-revoked-hash"),
+      pausedHash: ethers.id("paused-hash"),
+      pausedChildHash: ethers.id("paused-child-hash"),
     };
 
     const uris = {
@@ -43,6 +47,8 @@ describe("BaseProofRegistry", function () {
       revoked: "ipfs://revoked",
       childRevoked: "ipfs://child-revoked",
       license: "personal",
+      paused: "ipfs://paused",
+      pausedChild: "ipfs://paused-child",
     };
 
     return { registry, owner, operator, other, ids, hashes, uris };
@@ -173,5 +179,28 @@ describe("BaseProofRegistry", function () {
         uris.childRevoked
       )
     ).to.be.revertedWith("Asset is revoked");
+  });
+
+  it("should block registrations when paused", async function () {
+    const { registry, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
+
+    await registry.setPaused(true);
+
+    await expect(
+      registry.registerOriginal(ids.pausedAsset, hashes.pausedHash, uris.paused)
+    ).to.be.revertedWith("Registry paused");
+
+    await registry.setPaused(false);
+    await registry.registerOriginal(ids.parentAsset, hashes.parentHash, uris.parent);
+    await registry.setPaused(true);
+
+    await expect(
+      registry.registerDerivative(
+        ids.pausedChild,
+        hashes.pausedChildHash,
+        ids.parentAsset,
+        uris.pausedChild
+      )
+    ).to.be.revertedWith("Registry paused");
   });
 });
