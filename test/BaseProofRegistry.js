@@ -28,6 +28,8 @@ describe("BaseProofRegistry", function () {
       exclusiveLicense2: ethers.id("exclusive-license-2"),
       futureAsset: ethers.id("future-asset"),
       futureLicense: ethers.id("future-license"),
+      revocableAsset: ethers.id("revocable-asset"),
+      revocableLicense: ethers.id("revocable-license"),
     };
 
     const hashes = {
@@ -44,6 +46,7 @@ describe("BaseProofRegistry", function () {
       licensedHash: ethers.id("licensed-hash"),
       exclusiveHash: ethers.id("exclusive-hash"),
       futureHash: ethers.id("future-hash"),
+      revocableHash: ethers.id("revocable-hash"),
     };
 
     const uris = {
@@ -64,6 +67,7 @@ describe("BaseProofRegistry", function () {
       exclusive: "ipfs://exclusive",
       exclusiveTerms: "exclusive",
       future: "ipfs://future",
+      revocable: "ipfs://revocable",
     };
 
     return { registry, owner, operator, other, ids, hashes, uris };
@@ -319,5 +323,24 @@ describe("BaseProofRegistry", function () {
         uris.licenseTerms
       )
     ).to.be.revertedWith("Invalid license timestamp");
+  });
+
+  it("should revoke a license", async function () {
+    const { registry, owner, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
+
+    await registerOriginalAsset(registry, ids.revocableAsset, hashes.revocableHash, uris.revocable);
+
+    await registry.issueLicense(
+      ids.revocableLicense,
+      ids.revocableAsset,
+      other.address,
+      uris.licenseTerms
+    );
+
+    await registry.revokeLicense(ids.revocableLicense);
+
+    const license = await registry.getLicense(ids.revocableLicense);
+    expect(license[5]).to.equal(true);
+    expect(license[6]).to.equal(owner.address);
   });
 });
