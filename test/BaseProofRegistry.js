@@ -15,6 +15,7 @@ describe("BaseProofRegistry", function () {
       parentAsset: ethers.id("parent-asset"),
       derivativeAsset: ethers.id("derivative-asset"),
       transferAsset: ethers.id("transfer-asset"),
+      updateAsset: ethers.id("update-asset"),
     };
 
     const hashes = {
@@ -23,6 +24,7 @@ describe("BaseProofRegistry", function () {
       parentHash: ethers.id("parent-hash"),
       derivativeHash: ethers.id("derivative-hash"),
       transferHash: ethers.id("transfer-hash"),
+      updateHash: ethers.id("update-hash"),
     };
 
     const uris = {
@@ -31,6 +33,8 @@ describe("BaseProofRegistry", function () {
       parent: "ipfs://parent",
       derivative: "ipfs://derivative",
       transfer: "ipfs://transfer",
+      update: "ipfs://update",
+      updated: "ipfs://updated",
     };
 
     return { registry, owner, operator, other, ids, hashes, uris };
@@ -123,5 +127,15 @@ describe("BaseProofRegistry", function () {
     await expect(
       registry.connect(other).transferAssetOwnership(ids.transferAsset, other.address)
     ).to.be.revertedWith("Not authorized");
+  });
+
+  it("should update asset uri", async function () {
+    const { registry, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
+
+    await registry.registerOriginal(ids.updateAsset, hashes.updateHash, uris.update);
+    await registry.updateAssetURI(ids.updateAsset, uris.updated);
+
+    const asset = await registry.getAsset(ids.updateAsset);
+    expect(asset[4]).to.equal(uris.updated);
   });
 });
