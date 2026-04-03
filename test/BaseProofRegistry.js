@@ -16,6 +16,9 @@ describe("BaseProofRegistry", function () {
       derivativeAsset: ethers.id("derivative-asset"),
       transferAsset: ethers.id("transfer-asset"),
       updateAsset: ethers.id("update-asset"),
+      revokedAsset: ethers.id("revoked-asset"),
+      childOfRevoked: ethers.id("child-of-revoked"),
+      revokedLicense: ethers.id("revoked-license"),
     };
 
     const hashes = {
@@ -25,6 +28,8 @@ describe("BaseProofRegistry", function () {
       derivativeHash: ethers.id("derivative-hash"),
       transferHash: ethers.id("transfer-hash"),
       updateHash: ethers.id("update-hash"),
+      revokedHash: ethers.id("revoked-hash"),
+      childRevokedHash: ethers.id("child-revoked-hash"),
     };
 
     const uris = {
@@ -35,6 +40,9 @@ describe("BaseProofRegistry", function () {
       transfer: "ipfs://transfer",
       update: "ipfs://update",
       updated: "ipfs://updated",
+      revoked: "ipfs://revoked",
+      childRevoked: "ipfs://child-revoked",
+      license: "personal",
     };
 
     return { registry, owner, operator, other, ids, hashes, uris };
@@ -137,5 +145,33 @@ describe("BaseProofRegistry", function () {
 
     const asset = await registry.getAsset(ids.updateAsset);
     expect(asset[4]).to.equal(uris.updated);
+  });
+
+  it("should enforce revoked asset restrictions", async function () {
+    const { registry, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
+
+    await registry.registerOriginal(ids.revokedAsset, hashes.revokedHash, uris.revoked);
+    await registry.setAssetRevoked(ids.revokedAsset, true);
+
+    await expect(
+      registry.updateAssetURI(ids.revokedAsset, uris.updated)
+    ).to.be.revertedWith("Asset is revoked");
+
+    await expect(
+      registry.transferAssetOwnership(ids.revokedAsset, other.address)
+    ).to.be.revertedWith("Asset is revoked");
+
+    await expect(
+      registry.issueLicense(ids.revokedLicense, ids.revokedAsset, other.address, uris.license)
+    ).to.be.revertedWith("Asset is revoked");
+
+    await expect(
+      registry.registerDerivative(
+        ids.childOfRevoked,
+        hashes.childRevokedHash,
+        ids.revokedAsset,
+        uris.childRevoked
+      )
+    ).to.be.revertedWith("Asset is revoked");
   });
 });
