@@ -30,6 +30,9 @@ describe("BaseProofRegistry", function () {
       futureLicense: ethers.id("future-license"),
       revocableAsset: ethers.id("revocable-asset"),
       revocableLicense: ethers.id("revocable-license"),
+      activeAsset: ethers.id("active-asset"),
+      activeLicense: ethers.id("active-license"),
+      inactiveLicense: ethers.id("inactive-license"),
     };
 
     const hashes = {
@@ -47,6 +50,7 @@ describe("BaseProofRegistry", function () {
       exclusiveHash: ethers.id("exclusive-hash"),
       futureHash: ethers.id("future-hash"),
       revocableHash: ethers.id("revocable-hash"),
+      activeHash: ethers.id("active-hash"),
     };
 
     const uris = {
@@ -68,6 +72,7 @@ describe("BaseProofRegistry", function () {
       exclusiveTerms: "exclusive",
       future: "ipfs://future",
       revocable: "ipfs://revocable",
+      active: "ipfs://active",
     };
 
     return { registry, owner, operator, other, ids, hashes, uris };
@@ -342,5 +347,24 @@ describe("BaseProofRegistry", function () {
     const license = await registry.getLicense(ids.revocableLicense);
     expect(license[5]).to.equal(true);
     expect(license[6]).to.equal(owner.address);
+  });
+
+  it("should report license active status correctly", async function () {
+    const { registry, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
+
+    await registerOriginalAsset(registry, ids.activeAsset, hashes.activeHash, uris.active);
+
+    await registry.issueLicense(
+      ids.activeLicense,
+      ids.activeAsset,
+      other.address,
+      uris.licenseTerms
+    );
+
+    expect(await registry.isLicenseActive(ids.activeLicense)).to.equal(true);
+    expect(await registry.isLicenseActive(ids.inactiveLicense)).to.equal(false);
+
+    await registry.revokeLicense(ids.activeLicense);
+    expect(await registry.isLicenseActive(ids.activeLicense)).to.equal(false);
   });
 });
