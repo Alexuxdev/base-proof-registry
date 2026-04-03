@@ -114,4 +114,14 @@ describe("BaseProofRegistry", function () {
       registry.connect(owner).transferAssetOwnership(ids.transferAsset, owner.address)
     ).to.be.revertedWith("Not authorized");
   });
+
+  it("should reject unauthorized ownership transfer", async function () {
+    const { registry, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
+
+    await registry.registerOriginal(ids.transferAsset, hashes.transferHash, uris.transfer);
+
+    await expect(
+      registry.connect(other).transferAssetOwnership(ids.transferAsset, other.address)
+    ).to.be.revertedWith("Not authorized");
+  });
 });
