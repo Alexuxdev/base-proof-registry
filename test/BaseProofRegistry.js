@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
+const { loadFixture, time } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 
 describe("BaseProofRegistry", function () {
   async function deployRegistryFixture() {
@@ -21,6 +21,13 @@ describe("BaseProofRegistry", function () {
       revokedLicense: ethers.id("revoked-license"),
       pausedAsset: ethers.id("paused-asset"),
       pausedChild: ethers.id("paused-child"),
+      licensedAsset: ethers.id("licensed-asset"),
+      license1: ethers.id("license-1"),
+      exclusiveAsset: ethers.id("exclusive-asset"),
+      exclusiveLicense1: ethers.id("exclusive-license-1"),
+      exclusiveLicense2: ethers.id("exclusive-license-2"),
+      futureAsset: ethers.id("future-asset"),
+      futureLicense: ethers.id("future-license"),
     };
 
     const hashes = {
@@ -34,6 +41,9 @@ describe("BaseProofRegistry", function () {
       childRevokedHash: ethers.id("child-revoked-hash"),
       pausedHash: ethers.id("paused-hash"),
       pausedChildHash: ethers.id("paused-child-hash"),
+      licensedHash: ethers.id("licensed-hash"),
+      exclusiveHash: ethers.id("exclusive-hash"),
+      futureHash: ethers.id("future-hash"),
     };
 
     const uris = {
@@ -49,6 +59,11 @@ describe("BaseProofRegistry", function () {
       license: "personal",
       paused: "ipfs://paused",
       pausedChild: "ipfs://paused-child",
+      licensed: "ipfs://licensed",
+      licenseTerms: "personal-use",
+      exclusive: "ipfs://exclusive",
+      exclusiveTerms: "exclusive",
+      future: "ipfs://future",
     };
 
     return { registry, owner, operator, other, ids, hashes, uris };
@@ -58,11 +73,7 @@ describe("BaseProofRegistry", function () {
     await registry.registerOriginal(assetId, canonicalHash, metadataURI);
   }
 
-  async function expectStoredAsset(
-    registry,
-    assetId,
-    expected
-  ) {
+  async function expectStoredAsset(registry, assetId, expected) {
     const asset = await registry.getAsset(assetId);
 
     expect(asset[0]).to.equal(expected.assetId);
@@ -239,5 +250,74 @@ describe("BaseProofRegistry", function () {
         uris.pausedChild
       )
     ).to.be.revertedWith("Registry paused");
+  });
+
+  it("should issue a license", async function () {
+    const { registry, owner, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
+
+    await registerOriginalAsset(registry, ids.licensedAsset, hashes.licensedHash, uris.licensed);
+
+    await registry.issueLicense(
+      ids.license1,
+      ids.licensedAsset,
+      other.address,
+      uris.licenseTerms
+    );
+
+    const license = await registry.getLicense(ids.license1);
+
+    expect(license[0]).to.equal(ids.license1);
+    expect(license[1]).to.equal(ids.licensedAsset);
+    expect(license[2]).to.equal(other.address);
+    expect(license[3]).to.equal(uris.licenseTerms);
+    expect(license[5]).to.equal(false);
+    expect(license[6]).to.equal(owner.address);
+
+    const assetLicenses = await registry.getAssetLicenses(ids.licensedAsset);
+    expect(assetLicenses.length).to.equal(1);
+    expect(assetLicenses[0]).to.equal(ids.license1);
+  });
+
+  it("should enforce exclusive license rule", async function () {
+    const { registry, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
+
+    await registerOriginalAsset(registry, ids.exclusiveAsset, hashes.exclusiveHash, uris.exclusive);
+
+    await registry.issueLicense(
+      ids.exclusiveLicense1,
+      ids.exclusiveAsset,
+      other.address,
+      uris.exclusiveTerms
+    );
+
+    await expect(
+      registry.issueLicense(
+        ids.exclusiveLicense2,
+        ids.exclusiveAsset,
+        other.address,
+        uris.exclusiveTerms
+      )
+    ).to.be.revertedWith("Exclusive license already issued");
+  });
+
+  it("should reject invalid license timestamps", async function () {
+    const { registry, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
+
+    const now = await time.latest();
+    await time.setNextBlockTimestamp(now + 3600);
+
+    const tx = await registry.registerOriginal(ids.futureAsset, hashes.futureHash, uris.future);
+    await tx.wait();
+
+    await time.setNextBlockTimestamp(now + 1800);
+
+    await expect(
+      registry.issueLicense(
+        ids.futureLicense,
+        ids.futureAsset,
+        other.address,
+        uris.licenseTerms
+      )
+    ).to.be.revertedWith("Invalid license timestamp");
   });
 });
