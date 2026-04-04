@@ -118,6 +118,12 @@ describe("BaseProofRegistry", function () {
     expect(license[6]).to.equal(expected.issuedBy);
   }
 
+  async function expectSingleArrayValue(promise, expectedValue) {
+    const values = await promise;
+    expect(values.length).to.equal(1);
+    expect(values[0]).to.equal(expectedValue);
+  }
+
   it("should deploy the registry fixture", async function () {
     const { registry, owner } = await loadFixture(deployRegistryFixture);
 
@@ -177,9 +183,10 @@ describe("BaseProofRegistry", function () {
       exists: true,
     });
 
-    const children = await registry.getChildren(ids.parentAsset);
-    expect(children.length).to.equal(1);
-    expect(children[0]).to.equal(ids.derivativeAsset);
+    await expectSingleArrayValue(
+      registry.getChildren(ids.parentAsset),
+      ids.derivativeAsset
+    );
   });
 
   it("should transfer asset ownership", async function () {
@@ -299,9 +306,10 @@ describe("BaseProofRegistry", function () {
       issuedBy: owner.address,
     });
 
-    const assetLicenses = await registry.getAssetLicenses(ids.licensedAsset);
-    expect(assetLicenses.length).to.equal(1);
-    expect(assetLicenses[0]).to.equal(ids.license1);
+    await expectSingleArrayValue(
+      registry.getAssetLicenses(ids.licensedAsset),
+      ids.license1
+    );
   });
 
   it("should enforce exclusive license rule", async function () {
