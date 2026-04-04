@@ -90,6 +90,10 @@ describe("BaseProofRegistry", function () {
     await registry.registerOriginal(assetId, canonicalHash, metadataURI);
   }
 
+  async function issueStandardLicense(registry, licenseId, assetId, licensee, termsURI) {
+    await registry.issueLicense(licenseId, assetId, licensee, termsURI);
+  }
+
   async function expectStoredAsset(registry, assetId, expected) {
     const asset = await registry.getAsset(assetId);
 
@@ -101,6 +105,17 @@ describe("BaseProofRegistry", function () {
     expect(asset[5]).to.equal(expected.registrant);
     expect(asset[7]).to.equal(expected.revoked);
     expect(asset[8]).to.equal(expected.exists);
+  }
+
+  async function expectStoredLicense(registry, licenseId, expected) {
+    const license = await registry.getLicense(licenseId);
+
+    expect(license[0]).to.equal(expected.licenseId);
+    expect(license[1]).to.equal(expected.assetId);
+    expect(license[2]).to.equal(expected.licensee);
+    expect(license[3]).to.equal(expected.termsURI);
+    expect(license[5]).to.equal(expected.revoked);
+    expect(license[6]).to.equal(expected.issuedBy);
   }
 
   it("should deploy the registry fixture", async function () {
@@ -273,22 +288,16 @@ describe("BaseProofRegistry", function () {
     const { registry, owner, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
 
     await registerOriginalAsset(registry, ids.licensedAsset, hashes.licensedHash, uris.licensed);
+    await issueStandardLicense(registry, ids.license1, ids.licensedAsset, other.address, uris.licenseTerms);
 
-    await registry.issueLicense(
-      ids.license1,
-      ids.licensedAsset,
-      other.address,
-      uris.licenseTerms
-    );
-
-    const license = await registry.getLicense(ids.license1);
-
-    expect(license[0]).to.equal(ids.license1);
-    expect(license[1]).to.equal(ids.licensedAsset);
-    expect(license[2]).to.equal(other.address);
-    expect(license[3]).to.equal(uris.licenseTerms);
-    expect(license[5]).to.equal(false);
-    expect(license[6]).to.equal(owner.address);
+    await expectStoredLicense(registry, ids.license1, {
+      licenseId: ids.license1,
+      assetId: ids.licensedAsset,
+      licensee: other.address,
+      termsURI: uris.licenseTerms,
+      revoked: false,
+      issuedBy: owner.address,
+    });
 
     const assetLicenses = await registry.getAssetLicenses(ids.licensedAsset);
     expect(assetLicenses.length).to.equal(1);
@@ -342,8 +351,8 @@ describe("BaseProofRegistry", function () {
     const { registry, owner, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
 
     await registerOriginalAsset(registry, ids.revocableAsset, hashes.revocableHash, uris.revocable);
-
-    await registry.issueLicense(
+    await issueStandardLicense(
+      registry,
       ids.revocableLicense,
       ids.revocableAsset,
       other.address,
@@ -352,17 +361,22 @@ describe("BaseProofRegistry", function () {
 
     await registry.revokeLicense(ids.revocableLicense);
 
-    const license = await registry.getLicense(ids.revocableLicense);
-    expect(license[5]).to.equal(true);
-    expect(license[6]).to.equal(owner.address);
+    await expectStoredLicense(registry, ids.revocableLicense, {
+      licenseId: ids.revocableLicense,
+      assetId: ids.revocableAsset,
+      licensee: other.address,
+      termsURI: uris.licenseTerms,
+      revoked: true,
+      issuedBy: owner.address,
+    });
   });
 
   it("should report license active status correctly", async function () {
     const { registry, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
 
     await registerOriginalAsset(registry, ids.activeAsset, hashes.activeHash, uris.active);
-
-    await registry.issueLicense(
+    await issueStandardLicense(
+      registry,
       ids.activeLicense,
       ids.activeAsset,
       other.address,
