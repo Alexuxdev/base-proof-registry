@@ -33,6 +33,7 @@ describe("BaseProofRegistry", function () {
       activeAsset: ethers.id("active-asset"),
       activeLicense: ethers.id("active-license"),
       inactiveLicense: ethers.id("inactive-license"),
+      unauthorizedUpdateAsset: ethers.id("unauthorized-update-asset"),
     };
 
     const hashes = {
@@ -51,6 +52,7 @@ describe("BaseProofRegistry", function () {
       futureHash: ethers.id("future-hash"),
       revocableHash: ethers.id("revocable-hash"),
       activeHash: ethers.id("active-hash"),
+      unauthorizedUpdateHash: ethers.id("unauthorized-update-hash"),
     };
 
     const uris = {
@@ -73,6 +75,8 @@ describe("BaseProofRegistry", function () {
       future: "ipfs://future",
       revocable: "ipfs://revocable",
       active: "ipfs://active",
+      unauthorizedUpdate: "ipfs://unauthorized-update",
+      unauthorizedUpdated: "ipfs://unauthorized-updated",
     };
 
     return { registry, owner, operator, other, ids, hashes, uris };
@@ -366,5 +370,20 @@ describe("BaseProofRegistry", function () {
 
     await registry.revokeLicense(ids.activeLicense);
     expect(await registry.isLicenseActive(ids.activeLicense)).to.equal(false);
+  });
+
+  it("should reject unauthorized asset uri update", async function () {
+    const { registry, other, ids, hashes, uris } = await loadFixture(deployRegistryFixture);
+
+    await registerOriginalAsset(
+      registry,
+      ids.unauthorizedUpdateAsset,
+      hashes.unauthorizedUpdateHash,
+      uris.unauthorizedUpdate
+    );
+
+    await expect(
+      registry.connect(other).updateAssetURI(ids.unauthorizedUpdateAsset, uris.unauthorizedUpdated)
+    ).to.be.revertedWith("Not authorized");
   });
 });
