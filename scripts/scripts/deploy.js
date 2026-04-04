@@ -3,6 +3,8 @@ async function main() {
   const registry = await BaseProofRegistry.deploy();
 
   await registry.waitForDeployment();
+
+  console.log("BaseProofRegistry deployed to:", await registry.getAddress());
 }
 
 main().catch((error) => {
