@@ -57,6 +57,30 @@ The registry keeps:
 - exclusive license flags
 - revoked license flags
 
+## Asset lifecycle
+
+A typical asset flow looks like this:
+
+1. An admin registers an original asset with:
+   - asset id
+   - canonical hash
+   - metadata URI
+
+2. The original asset becomes the root of its own lineage.
+
+3. A derivative asset can be registered later:
+   - with a new asset id
+   - with a new canonical hash
+   - linked to an existing parent asset
+
+4. The derivative inherits the same root asset id from its lineage origin.
+
+5. Asset ownership can be transferred to another address.
+
+6. Metadata URI can be updated when the asset stays active.
+
+7. An asset may be revoked, which blocks state-changing operations tied to that asset.
+
 ## Project Structure
 
 - `contracts/` — smart contracts
