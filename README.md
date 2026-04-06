@@ -81,6 +81,30 @@ A typical asset flow looks like this:
 
 7. An asset may be revoked, which blocks state-changing operations tied to that asset.
 
+## License workflow
+
+A typical license flow looks like this:
+
+1. An asset must already exist in the registry.
+
+2. An admin issues a license with:
+   - license id
+   - linked asset id
+   - licensee address
+   - terms URI or terms label
+
+3. The license is stored and linked back to the asset.
+
+4. License activity depends on:
+   - the license being issued
+   - the license not being revoked
+   - the linked asset still existing
+   - the linked asset not being revoked
+
+5. A license can be revoked by an authorized sender.
+
+6. If license terms are marked as `exclusive`, the registry blocks creation of another exclusive license for the same asset.
+
 ## Project Structure
 
 - `contracts/` — smart contracts
